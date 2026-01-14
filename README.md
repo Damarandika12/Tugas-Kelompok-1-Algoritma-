@@ -1,0 +1,2 @@
+# Tugas-Kelompok-1-Algoritma-
+MEMBUAT WEB-MANAJEMEN INVENTARIS 
