@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Inventaris Barang</title>
+    <link rel="stylesheet" href="tugas.css">
+</head>
+<body>
+    <h1>Sistem Manajemen Inventaris Barang</h1>
+    <div class="menu">
+        <button onclick="showForm('tambah')">1. Tambah Barang</button>
+        <button onclick="showForm('lihat')">2. Lihat Barang</button>
+        <button onclick="showForm('update')">3. Update Barang</button>
+        <button onclick="showForm('hapus')">4. Hapus Barang</button>
+        <button onclick="showForm('sorting')">5. Sorting</button>
+        <button onclick="showForm('searching')">6. Searching</button>
+        <button onclick="showForm('laporan')">7. Laporan</button>
+        <button onclick="showForm('restock')">8. Restock</button>
+        <button onclick="keluar()">9. Keluar</button>
+    </div>
+
+    <div id="tambah" class="form-container">
+        <h2>Tambah Barang</h2>
+        <input type="text" id="kodeTambah" placeholder="Kode Barang"><br>
+        <input type="text" id="namaTambah" placeholder="Nama Barang"><br>
+        <input type="text" id="kategoriTambah" placeholder="Kategori"><br>
+        <input type="number" id="hargaTambah" placeholder="Harga"><br>
+        <input type="number" id="stokTambah" placeholder="Stok"><br>
+        <button onclick="tambahBarang()">Simpan</button>
+    </div>
+
+    <div id="lihat" class="form-container">
+        <h2>Lihat Barang</h2>
+        <input type="text" id="kategoriLihat" placeholder="Kategori (atau 0 jika tidak ada)"><br>
+        <button onclick="lihatBarang()">Lihat</button>
+    </div>
+
+    <div id="update" class="form-container">
+        <h2>Update Barang</h2>
+        <input type="text" id="kodeUpdate" placeholder="Kode Barang"><br>
+        <input type="text" id="namaUpdate" placeholder="Nama Baru"><br>
+        <input type="text" id="kategoriUpdate" placeholder="Kategori Baru"><br>
+        <input type="number" id="hargaUpdate" placeholder="Harga Baru"><br>
+        <input type="number" id="stokUpdate" placeholder="Stok Baru"><br>
+        <button onclick="updateBarang()">Update</button>
+    </div>
+
+    <div id="hapus" class="form-container">
+        <h2>Hapus Barang</h2>
+        <input type="text" id="kodeHapus" placeholder="Kode Barang"><br>
+        <button onclick="hapusBarang()">Hapus</button>
+    </div>
+
+    <div id="sorting" class="form-container">
+        <h2>Sorting</h2>
+        <select id="metodeSorting">
+            <option value="1">Nama A-Z</option>
+            <option value="2">Harga/Stok</option>
+        </select><br>
+        <div id="subSorting" style="display:none;">
+            <select id="subMetodeSorting">
+                <option value="1">Harga</option>
+                <option value="2">Stok</option>
+            </select><br>
+        </div>
+        <button onclick="sorting()">Sort</button>
+    </div>
+
+    <div id="searching" class="form-container">
+        <h2>Searching</h2>
+        <select id="metodeSearching">
+            <option value="1">Kode Barang</option>
+            <option value="2">Nama Barang</option>
+        </select><br>
+        <input type="text" id="querySearching" placeholder="Masukkan query"><br>
+        <button onclick="searching()">Cari</button>
+    </div>
+
+    <div id="laporan" class="form-container">
+        <h2>Laporan</h2>
+        <button onclick="laporan()">Lihat Laporan</button>
+    </div>
+
+    <div id="restock" class="form-container">
+        <h2>Restock</h2>
+        <input type="text" id="kodeRestock" placeholder="Kode Barang"><br>
+        <input type="number" id="jumlahRestock" placeholder="Jumlah Restock"><br>
+        <button onclick="restock()">Restock</button>
+    </div>
+
+    <div class="output" id="output"></div>
+
+    <script>
+        let barangList = JSON.parse(localStorage.getItem('barangList')) || [];
+        let historiRestock = JSON.parse(localStorage.getItem('historiRestock')) || [];
+
+        function showForm(id) {
+            document.querySelectorAll('.form-container').forEach(div => div.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            document.getElementById('output').innerText = '';
+            if (id === 'sorting') {
+                document.getElementById('metodeSorting').addEventListener('change', function() {
+                    if (this.value === '2') {
+                        document.getElementById('subSorting').style.display = 'block';
+                    } else {
+                        document.getElementById('subSorting').style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        function tambahBarang() {
+            const kode = document.getElementById('kodeTambah').value;
+            if (barangList.some(item => item.kode === kode)) {
+                alert('ERROR: kode barang duplikat');
+                return;
+            }
+            const nama = document.getElementById('namaTambah').value;
+            const kategori = document.getElementById('kategoriTambah').value;
+            const harga = parseFloat(document.getElementById('hargaTambah').value);
+            const stok = parseInt(document.getElementById('stokTambah').value);
+            barangList.push({ kode, nama, kategori, harga, stok });
+            localStorage.setItem('barangList', JSON.stringify(barangList));
+            alert('Data barang tersimpan');
+            clearForm('tambah');
+        }
+
+        function lihatBarang() {
+            const kategori = document.getElementById('kategoriLihat').value;
+            if (kategori === '0') {
+                document.getElementById('output').innerText = 'Kategori tidak tersedia';
+                return;
+            }
+            let output = '';
+            let found = false;
+            barangList.forEach(item => {
+                if (item.kategori === kategori) {
+                    output += `Kode: ${item.kode}, Nama: ${item.nama}, Harga: ${item.harga}, Stok: ${item.stok}\n`;
+                    found = true;
+                }
+            });
+            if (!found) output = 'Tidak ada barang di kategori tersebut';
+            document.getElementById('output').innerText = output;
+        }
+
+        function updateBarang() {
+            const kode = document.getElementById('kodeUpdate').value;
+            const item = barangList.find(i => i.kode === kode);
+            if (!item) {
+                alert('Barang tidak ditemukan');
+                return;
+            }
+            item.nama = document.getElementById('namaUpdate').value;
+            item.kategori = document.getElementById('kategoriUpdate').value;
+            item.harga = parseFloat(document.getElementById('hargaUpdate').value);
+            item.stok = parseInt(document.getElementById('stokUpdate').value);
+            localStorage.setItem('barangList', JSON.stringify(barangList));
+            alert('Barang berhasil diupdate');
+            clearForm('update');
+        }
+
+        function hapusBarang() {
+            const kode = document.getElementById('kodeHapus').value;
+            const index = barangList.findIndex(i => i.kode === kode);
+            if (index === -1) {
+                alert('Barang tidak ditemukan');
+                return;
+            }
+            barangList.splice(index, 1);
+            localStorage.setItem('barangList', JSON.stringify(barangList));
+            alert('Barang berhasil dihapus');
+            clearForm('hapus');
+        }
+
+        function sorting() {
+            const metode = document.getElementById('metodeSorting').value;
+            let sortedList;
+            if (metode === '1') {
+                sortedList = barangList.sort((a, b) => a.nama.localeCompare(b.nama));
+            } else {
+                const sub = document.getElementById('subMetodeSorting').value;
+                if (sub === '1') {
+                    sortedList = barangList.sort((a, b) => a.harga - b.harga);
+                } else {
+                    sortedList = barangList.sort((a, b) => a.stok - b.stok);
+                }
+            }
+            let output = '';
+            sortedList.forEach(item => {
+                output += `Kode: ${item.kode}, Nama: ${item.nama}, Harga: ${item.harga}, Stok: ${item.stok}\n`;
+            });
+            document.getElementById('output').innerText = output;
+        }
+
+        function searching() {
+            const metode = document.getElementById('metodeSearching').value;
+            const query = document.getElementById('querySearching').value;
+            let item;
+            if (metode === '1') {
+                item = barangList.find(i => i.kode === query);
+            } else {
+                item = barangList.find(i => i.nama === query);
+            }
+            if (!item) {
+                document.getElementById('output').innerText = 'Barang tidak ditemukan';
+                return;
+            }
+            document.getElementById('output').innerText = `Kode: ${item.kode}, Nama: ${item.nama}, Kategori: ${item.kategori}, Harga: ${item.harga}, Stok: ${item.stok}`;
+        }
+
+        function laporan() {
+            const total = barangList.reduce((sum, item) => sum + (item.stok * item.harga), 0);
+            document.getElementById('output').innerText = `Total nilai barang: ${total}`;
+        }
+
+        function restock() {
+            const kode = document.getElementById('kodeRestock').value;
+            const item = barangList.find(i => i.kode === kode);
+            if (!item) {
+                alert('Barang tidak ditemukan');
+                return;
+            }
+            const jumlah = parseInt(document.getElementById('jumlahRestock').value);
+            item.stok += jumlah;
+            const tanggal = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            historiRestock.push({ kode, jumlah, tanggal });
+            localStorage.setItem('barangList', JSON.stringify(barangList));
+            localStorage.setItem('historiRestock', JSON.stringify(historiRestock));
+            let output = 'Histori restock:\n';
+            historiRestock.filter(h => h.kode === kode).forEach(h => {
+                output += `Jumlah: ${h.jumlah}, Tanggal: ${h.tanggal}\n`;
+            });
+            document.getElementById('output').innerText = output;
+            clearForm('restock');
+        }
+
+        function keluar() {
+            alert('Keluar dari program');
+        }
+
+        function clearForm(id) {
+            document.querySelectorAll(`#${id} input`).forEach(input => input.value = '');
+        }
+    </script>
+</body>
+</html>
